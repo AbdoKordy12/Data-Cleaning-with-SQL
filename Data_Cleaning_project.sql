@@ -101,30 +101,3 @@ ALTER TABLE layoffs_staging2
 DROP COLUMN row_num;
 SELECT * FROM layoffs_staging2;
 
--- Additional exploratory data
-SELECT YEAR(`date`),SUM(total_laid_off)
-FROM layoffs_staging2
-GROUP BY YEAR(`date`)
-ORDER BY YEAR(`date`) DESC;  
-
-WITH ROLLING_TOTAL AS
-(SELECT SUBSTRING(`date`,1,7) AS MONTH_YEAR,SUM(total_laid_off) AS total_off
-FROM layoffs_staging2
-WHERE SUBSTRING(`date`,1,7) IS NOT NULL
-GROUP BY MONTH_YEAR
-ORDER BY MONTH_YEAR
-)
-SELECT MONTH_YEAR,SUM(total_off) OVER(PARTITION BY SUBSTRING(MONTH_YEAR,1,4) ORDER BY MONTH_YEAR)
-FROM ROLLING_TOTAL;
-WITH row_cte AS
-(
-SELECT *,ROW_NUMBER() OVER(PARTITION BY company,location,industry,`date`) AS row_num
-FROM layoffs_staging2
-)
-SELECT *
-FROM row_cte
-WHERE row_num>1;
-SELECT *
-FROM layoffs_staging2
-WHERE company='Terminus' AND location='Atlanta';
-
